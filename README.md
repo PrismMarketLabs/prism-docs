@@ -20,7 +20,7 @@ Prism smart contract is deployed at:
 
 `https://testnet.prism.market`
 
-`https://prism.market`
+`https://prism.market` (mainnet)
 
 ## API interface
 
