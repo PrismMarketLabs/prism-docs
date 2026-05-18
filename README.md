@@ -83,7 +83,6 @@ message PrismPredictionIntentRequest {
   double price_usd = 6          [json_name = "priceUsd",    (validate.rules).double = {gt: -1.0, lt: 1.0} /* price_usd <0 => sell, price_usd >=0 => buy */];
   double qty = 7                [json_name = "qty",         (validate.rules).double = {gt: 0.0}];
   string sig = 8                [json_name = "sig",         (validate.rules).string = {pattern: "^[A-Za-z0-9+/]{20,100}={0,2}$"} /* base64-encoded signature (URL-safe base64 without padding, min 20 chars, max 100 chars) */];
-  // pass extra key info - i) avoid lookups ii) handle situation where user has changed their key
   string public_key = 9         [json_name = "publicKey",   (validate.rules).string = {pattern: "^(04[0-9a-fA-F]{128}|0[23][0-9a-fA-F]{64}|[0-9a-fA-F]{64})$"} /* ECDSA (compressed/uncompressed) or Ed25519 public key in hex format, no 0x prefix */];
   string evm_address = 10       [json_name = "evmAddress",  (validate.rules).string = {pattern: "^[0-9a-fA-F]{40}$"} /* 20-byte (40 hex chars) EVM address (no 0x prefix) */];
   uint32 key_type = 11          [json_name = "keyType",     (validate.rules).uint32 = {in: [1, 2]} /* 1 = ed25519, 2 = ecdsa_secp256k1 */];
