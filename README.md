@@ -14,6 +14,14 @@ Prism smart contract is deployed at:
 
 `TBC`
 
+## API endpoints (prod)
+
+`https://previewnet.prism.market`
+
+`https://testnet.prism.market`
+
+`https://prism.market`
+
 ## API interface
 
 API protobuf interface
@@ -108,7 +116,6 @@ message MacroMetadataResponse {
   map<string, double> total_volume_usd = 13           [json_name = "totalVolumeUsd"];
   uint32 active_traders = 14                          [json_name = "activeTraders"];
   repeated Category categories = 15                   [json_name = "categories"];
-  // constants.go/SigSchemeDateRanges
   repeated UnixDateRange sig_scheme_date_ranges = 16  [json_name = "sigSchemeDateRanges"];
 }
 
@@ -175,7 +182,6 @@ message MarketResponse {
   string resolved_at = 7           [json_name = "resolvedAt"];
   string image_url = 8             [json_name = "imageUrl"];
   float price_usd = 9              [json_name = "priceUsd"];
-  // string smart_contract_id = 9  [json_name = "smartContractId"]; // not needed - smart_contract_id is a column in the markets table
   string description = 10          [json_name = "description"];
   string closes_at = 11            [json_name = "closesAt"];
   optional bool outcome = 12       [json_name = "outcome"];
@@ -209,7 +215,6 @@ message GetCommentsRequest {
 }
 
 message Comment {
-  // string comment_id = 1    [json_name = "commentId"];
   string account_id = 1    [json_name = "accountId"];
   string content = 2       [json_name = "content"];
   string sig = 3           [json_name = "sig"];
