@@ -1,5 +1,11 @@
 # Prism Protocol Documentation
 
+Documentation for interacting with the Prism prediction protocol.
+
+Orderbooks are off-chain and are maintained by Prism. Only valid, pre-authorized, signed `PrismOrderIntentRequest` objects can be accepted by the smart contract for collateral token transfer (USDC). The public API is documented below (protobuf, gRPC).
+
+Settlement is performed on-chain using a smart contract. The smart contract's full ABI is documented below.
+
 ## Smart contract address
 
 Prism smart contract is deployed at:
@@ -26,7 +32,7 @@ Prism smart contract is deployed at:
 
 `https://prism.market` (mainnet)
 
-## API interface
+## API interface (gRPC)
 
 API protobuf interface
 
