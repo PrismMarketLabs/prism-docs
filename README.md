@@ -12,7 +12,9 @@ Prism smart contract is deployed at:
 
 **testnet**
 
-`0.0.9458377` (latest)
+`0.0.9502269` (latest)
+
+`0.0.9458377`
 
 `0.0.9385460`
 
@@ -64,6 +66,7 @@ service ApiServicePublic {
   rpc GetComments(GetCommentsRequest) returns (GetCommentsResponse);
   rpc GetUserPortfolio(UserPortfolioRequest) returns (UserPortfolioResponse);
   rpc CancelPredictionIntent(CancelOrderRequest) returns (StdResponse);
+  rpc GetTxHashes(TxIdRequest) returns (TxIdHashesResponse);
 }
 
 
@@ -88,13 +91,13 @@ message MarketIdRequest {
   optional string lang = 2;
 }
 
+message TxIdRequest {
+  string tx_id = 1 [json_name = "txId",     (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
+}
+
 /////
 // ApiServicePublic
 ////
-
-/////
-// Common
-/////
 
 message Empty {}
 
@@ -295,6 +298,14 @@ message CancelOrderRequest {
   string market_id = 1      [json_name = "marketId",  (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
   string tx_id = 2          [json_name = "txId",      (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
 }
+
+message TxHash {
+  string tx_hash = 1  [json_name = "txHash"];
+  double qty = 2      [json_name = "qty"];
+}
+message TxIdHashesResponse {
+  repeated TxHash tx_hashes = 1 [json_name = "txHashes"];
+}
 ```
 
 ## ABI
@@ -302,6 +313,10 @@ message CancelOrderRequest {
 Application Binary Interface
 
 ```json
+
+testnet:0.0.9502269
+
+[{"inputs":[{"internalType":"address","name":"_collateralToken","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"newDao","type":"address"}],"name":"DaoUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"marketId","type":"uint128"},{"indexed":false,"internalType":"uint8","name":"outcome","type":"uint8"}],"name":"MarketResolved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"newOracle","type":"address"}],"name":"OracleUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"marketId","type":"uint128"},{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"collateralUsd","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"qtyScaled","type":"uint256"},{"indexed":false,"internalType":"bool","name":"primarySecondary","type":"bool"}],"name":"PositionTokensPurchased","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"newRakePercentScaled100","type":"uint256"}],"name":"RakeUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"token","type":"address"}],"name":"TokenAssociated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"marketId","type":"uint128"},{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"WinningsRedeemed","type":"event"},{"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"}],"name":"associateToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"associatedTokens","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"}],"name":"claimCollateralAfterOneYear","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"collateralToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"collateralTokenNdecimals","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"string","name":"_statement","type":"string"}],"name":"createNewMarket","outputs":[{"internalType":"uint256","name":"allowance","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"}],"name":"emergencyCloseMarket5050","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"}],"name":"getTotalCollateral","outputs":[{"internalType":"uint256","name":"amountUSDC","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"address","name":"user","type":"address"}],"name":"getUserTokens","outputs":[{"internalType":"uint256","name":"yes","type":"uint256"},{"internalType":"uint256","name":"no","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"marketCreationFeeUsdc","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"},{"internalType":"address","name":"","type":"address"}],"name":"noTokens","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"outcomes","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"address","name":"signerSlot0","type":"address"},{"internalType":"address","name":"signerSlot1","type":"address"},{"internalType":"uint256","name":"collateralUsdAbsScaledSlot0","type":"uint256"},{"internalType":"uint256","name":"collateralUsdAbsScaledSlot1","type":"uint256"},{"internalType":"uint256","name":"qtyScaledSlot0","type":"uint256"},{"internalType":"uint256","name":"qtyScaledSlot1","type":"uint256"},{"internalType":"uint128","name":"txIdSlot0","type":"uint128"},{"internalType":"uint128","name":"txIdSlot1","type":"uint128"},{"internalType":"bytes","name":"sigObjSlot0","type":"bytes"},{"internalType":"bytes","name":"sigObjSlot1","type":"bytes"},{"internalType":"bool","name":"primarySecondarySlot0","type":"bool"},{"internalType":"bool","name":"primarySecondarySlot1","type":"bool"}],"name":"posColToksOnBehalfAtomic","outputs":[{"internalType":"uint256","name":"yes","type":"uint256"},{"internalType":"uint256","name":"no","type":"uint256"},{"internalType":"uint256","name":"yes2","type":"uint256"},{"internalType":"uint256","name":"no2","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"}],"name":"redeem","outputs":[{"internalType":"uint256","name":"amountUSDC","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"address","name":"user_account","type":"address"}],"name":"redeemOnBehalfOfUser","outputs":[{"internalType":"uint256","name":"amountUSDC","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"resolutionTimes","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"bool","name":"noYes","type":"bool"}],"name":"resolveMarket","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_dao","type":"address"}],"name":"setDao","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_marketCreationFeeUsdc","type":"uint256"}],"name":"setMarketCreationFee","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_oracle","type":"address"}],"name":"setOracle","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_rakePercentScaled100","type":"uint256"}],"name":"setRakeScaled100","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"statements","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"totalCollateralUsd","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"totalNoTokensOutstanding","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"totalYesTokensOutstanding","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"},{"internalType":"address","name":"","type":"address"}],"name":"yesTokens","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]
 
 testnet:0.0.9458377
 
