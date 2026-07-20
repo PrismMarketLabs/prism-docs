@@ -12,7 +12,9 @@ Prism smart contract is deployed at:
 
 **testnet**
 
-`0.0.9502269` (latest)
+`0.0.9653861` (latest)
+
+`0.0.9502269`
 
 `0.0.9458377`
 
@@ -99,27 +101,6 @@ message TxIdRequest {
 // ApiServicePublic
 ////
 
-message Empty {}
-
-message StdResponse {
-  string message = 1     [json_name = "message"];
-  int32 error_code = 2   [json_name = "errorCode"];
-}
-
-message LimitOffsetRequest {
-  int32 limit = 1  [(validate.rules).int32 = {gt: 0}];
-  int32 offset = 2 [(validate.rules).int32 = {gte: 0}];
-}
-
-message MarketIdRequest {
-  string market_id = 1 [json_name = "marketId",     (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
-  optional string lang = 2;
-}
-
-/////
-// ApiServicePublic
-////
-
 message PrismPredictionIntentRequest {
   string tx_id = 1              [json_name = "txId",        (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
   string net = 2                [json_name = "net",         (validate.rules).string = {in: ["mainnet", "testnet", "previewnet"]} /* Hedera network */];
@@ -129,7 +110,6 @@ message PrismPredictionIntentRequest {
   double price_usd = 6          [json_name = "priceUsd",    (validate.rules).double = {gt: -1.0, lt: 1.0} /* price_usd <0 => sell, price_usd >=0 => buy */];
   double qty = 7                [json_name = "qty",         (validate.rules).double = {gt: 0.0}];
   string sig = 8                [json_name = "sig",         (validate.rules).string = {pattern: "^[A-Za-z0-9+/]{20,100}={0,2}$"} /* base64-encoded signature (URL-safe base64 without padding, min 20 chars, max 100 chars) */];
-  // pass extra key info - i) avoid lookups ii) handle situation where user has changed their key
   string public_key = 9         [json_name = "publicKey",   (validate.rules).string = {pattern: "^(04[0-9a-fA-F]{128}|0[23][0-9a-fA-F]{64}|[0-9a-fA-F]{64})$"} /* ECDSA (compressed/uncompressed) or Ed25519 public key in hex format, no 0x prefix */];
   string evm_address = 10       [json_name = "evmAddress",  (validate.rules).string = {pattern: "^[0-9a-fA-F]{40}$"} /* 20-byte (40 hex chars) EVM address (no 0x prefix) */];
   uint32 key_type = 11          [json_name = "keyType",     (validate.rules).uint32 = {in: [1, 2]} /* 1 = ed25519, 2 = ecdsa_secp256k1 */];
@@ -162,7 +142,6 @@ message MacroMetadataResponse {
   map<string, double> total_volume_usd = 13           [json_name = "totalVolumeUsd"];
   uint32 active_traders = 14                          [json_name = "activeTraders"];
   repeated Category categories = 15                   [json_name = "categories"];
-  // constants.go/SigSchemeDateRanges
   repeated UnixDateRange sig_scheme_date_ranges = 16  [json_name = "sigSchemeDateRanges"];
 }
 
@@ -191,6 +170,29 @@ message PredictionIntents {
   repeated PredictionIntentResponse prediction_intents = 1   [json_name = "openPredictionIntents"];
 }
 
+message Match {
+  string market_id = 1       [json_name = "marketId"];
+  string tx_id1 = 2          [json_name = "txId1"];
+  string tx_id2 = 3          [json_name = "txId2"];
+  double price_usd = 5       [json_name = "priceUsd"];
+  double qty1 = 6            [json_name = "qty1"];
+  double qty2 = 7            [json_name = "qty2"];
+  string created_at = 8      [json_name = "matchedAt"];
+  string tx_hash = 9         [json_name = "txHash"];
+  double price_usd1 = 10     [json_name = "priceUsd1"];
+  double price_usd2 = 11     [json_name = "priceUsd2"];
+}
+
+message GetMatchesRequest {
+  string market_id = 1 [json_name = "marketId",  (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
+  optional int32 limit = 2      [json_name = "limit",     (validate.rules).int32 = {gt: 0, lte: 1000} /* max 1000 matches per request */];
+  optional int32 offset = 3     [json_name = "offset",    (validate.rules).int32 = {gte: 0} /* offset in matches */];
+}
+
+message MatchedIntents {
+  repeated Match matched_prediction_intents = 1   [json_name = "matchedPredictionIntents"];
+}
+
 message Position {
   string market_id = 1        [json_name = "marketId"];
   string evm_address = 2      [json_name = "evmAddress"];
@@ -201,11 +203,18 @@ message Position {
 }
 
 message PositionInfo {
-  Position position = 1         [json_name = "position"];
-  float price_usd = 2           [json_name = "priceUsd"];
-  bool is_paused = 3            [json_name = "isPaused"];
-  string resolved_at = 4        [json_name = "resolvedAt"];
-  string redeemed_at = 5        [json_name = "redeemedAt"];
+  Position position = 1                     [json_name = "position"];
+  float price_usd = 2                       [json_name = "priceUsd"];
+  bool is_paused = 3                        [json_name = "isPaused"];
+  string resolved_at = 4                    [json_name = "resolvedAt"];
+  string redeemed_at = 5                    [json_name = "redeemedAt"];
+
+  optional double avg_price_yes_usd = 6     [json_name = "avgPriceYesUsd"];   // weighted-avg entry, YES
+  optional double avg_price_no_usd = 7      [json_name = "avgPriceNoUsd"];    // weighted-avg entry, NO
+  optional double cost_basis_yes_usd = 8    [json_name = "costBasisYesUsd"];  // = qtyYes * avgPriceYes + unallocated fees
+  optional double cost_basis_no_usd = 9     [json_name = "costBasisNoUsd"];   // = qtyNo * avgPriceNo + unallocated fees
+  optional double realized_pnl_usd = 10     [json_name = "realizedPnlUsd"];   // lifetime, both sides combined for this market
+  optional string cost_basis_as_of = 11     [json_name = "costBasisAsOf"];    // RFC3339 timestamp of the last fill applied
 }
 
 message PrismPoints {
@@ -230,16 +239,17 @@ message MarketResponse {
   string resolved_at = 7           [json_name = "resolvedAt"];
   string image_url = 8             [json_name = "imageUrl"];
   float price_usd = 9              [json_name = "priceUsd"];
-  // string smart_contract_id = 9  [json_name = "smartContractId"]; // not needed - smart_contract_id is a column in the markets table
   string description = 10          [json_name = "description"];
-  string closes_at = 11            [json_name = "closesAt"];
-  optional bool outcome = 12       [json_name = "outcome"];
-  string smart_contract_id = 13    [json_name = "smartContractId"];
-  repeated int32 category_ids = 14 [json_name = "categoryIds"];
-  string alias_yes = 15            [json_name = "aliasYes"];
-  string alias_no = 16             [json_name = "aliasNo"];
-  string hex_color_yes = 17        [json_name = "hexColorYes"];
-  string hex_color_no = 18         [json_name = "hexColorNo"];
+  string rules = 11                [json_name = "rules"];
+  string closes_at = 12            [json_name = "closesAt"];
+  optional int32 outcome = 13      [json_name = "outcome"]; // 0 = NO wins, 1 = YES wins, 2 = market cancelled with 50/50 payout (EmergClose5050)
+  string smart_contract_id = 14    [json_name = "smartContractId"];
+  repeated int32 category_ids = 15 [json_name = "categoryIds"];
+  string alias_yes = 16            [json_name = "aliasYes"];
+  string alias_no = 17             [json_name = "aliasNo"];
+  string hex_color_yes = 18        [json_name = "hexColorYes"];
+  string hex_color_no = 19         [json_name = "hexColorNo"];
+  float rake_percent = 20          [json_name = "rakePercent"];
 }
 
 message MarketsResponse {
@@ -268,7 +278,6 @@ message GetCommentsRequest {
 }
 
 message Comment {
-  // string comment_id = 1    [json_name = "commentId"];
   string account_id = 1    [json_name = "accountId"];
   string content = 2       [json_name = "content"];
   string sig = 3           [json_name = "sig"];
@@ -290,13 +299,18 @@ message CreateCommentRequest {
   string account_id = 2   [json_name = "accountId",   (validate.rules).string = {pattern: "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"} /* Hedera account ID (no leading zeros) */];
   string content = 3      [json_name = "content",     (validate.rules).string = {min_len: 1, max_len: 1000}];
   string sig = 4          [json_name = "sig",         (validate.rules).string = {pattern: "^[A-Za-z0-9+/]{20,100}={0,2}$"} /* base64-encoded signature (URL-safe base64 without padding, min 20 chars, max 100 chars) */];
-  string public_key = 5   [json_name = "publicKey",   (validate.rules).string = {pattern: "^(04|03|02)[0-9a-fA-F]{32,256}$"} /* uncompressed (04...) or compressed (02... or 03...) public key (ed25519, ecdsa, etc.) in hex format */];
+  string public_key = 5   [json_name = "publicKey",   (validate.rules).string = {pattern: "^(04[0-9a-fA-F]{128}|0[23][0-9a-fA-F]{64}|[0-9a-fA-F]{64})$"} /* ECDSA (compressed/uncompressed) or Ed25519 public key in hex format, no 0x prefix */];
   uint32 key_type = 6     [json_name = "keyType",     (validate.rules).uint32 = {in: [1, 2]} /* 1 = ed25519, 2 = ecdsa_secp256k1 */];
 }
 
 message CancelOrderRequest {
   string market_id = 1      [json_name = "marketId",  (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
   string tx_id = 2          [json_name = "txId",      (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
+  string net = 3            [json_name = "net",       (validate.rules).string = {in: ["mainnet", "testnet", "previewnet"]} /* Hedera network */];
+  string account_id = 4     [json_name = "accountId", (validate.rules).string = {pattern: "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"} /* Hedera account ID (no leading zeros) */];
+  string sig = 5            [json_name = "sig",       (validate.rules).string = {pattern: "^[A-Za-z0-9+/]{20,100}={0,2}$"} /* base64-encoded signature (URL-safe base64 without padding, min 20 chars, max 100 chars) */];
+  string public_key = 6     [json_name = "publicKey", (validate.rules).string = {pattern: "^(04|03|02)[0-9a-fA-F]{32,256}$"} /* uncompressed (04...) or compressed (02... or 03...) public key (ed25519, ecdsa, etc.) in hex format */];
+  uint32 key_type = 7       [json_name = "keyType",   (validate.rules).uint32 = {in: [1, 2]} /* 1 = ed25519, 2 = ecdsa_secp256k1 */];
 }
 
 message TxHash {
@@ -313,6 +327,10 @@ message TxIdHashesResponse {
 Application Binary Interface
 
 ```json
+
+testnet: 0.0.9653861
+
+[{"inputs":[{"internalType":"address","name":"_collateralToken","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"newDao","type":"address"}],"name":"DaoUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"marketId","type":"uint128"},{"indexed":false,"internalType":"uint8","name":"outcome","type":"uint8"}],"name":"MarketResolved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"newOracle","type":"address"}],"name":"OracleUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"marketId","type":"uint128"},{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"collateralUsd","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"qtyScaled","type":"uint256"},{"indexed":false,"internalType":"bool","name":"primarySecondary","type":"bool"}],"name":"PositionTokensPurchased","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"newRakePercentScaled100","type":"uint256"}],"name":"RakeUpdated","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"token","type":"address"}],"name":"TokenAssociated","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint128","name":"marketId","type":"uint128"},{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"WinningsRedeemed","type":"event"},{"inputs":[{"internalType":"address","name":"tokenAddress","type":"address"}],"name":"associateToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"associatedTokens","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"}],"name":"claimCollateralAfterOneYear","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"collateralToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"collateralTokenNdecimals","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"string","name":"_statement","type":"string"}],"name":"createNewMarket","outputs":[{"internalType":"uint256","name":"allowance","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"}],"name":"emergencyCloseMarket5050","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"}],"name":"getTotalCollateral","outputs":[{"internalType":"uint256","name":"amountUSDC","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"address","name":"user","type":"address"}],"name":"getUserTokens","outputs":[{"internalType":"uint256","name":"yes","type":"uint256"},{"internalType":"uint256","name":"no","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"marketCreationFeeUsdc","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"},{"internalType":"address","name":"","type":"address"}],"name":"noTokens","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"outcomes","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"address","name":"signerSlot0","type":"address"},{"internalType":"address","name":"signerSlot1","type":"address"},{"internalType":"uint256","name":"collateralUsdAbsScaledSlot0","type":"uint256"},{"internalType":"uint256","name":"collateralUsdAbsScaledSlot1","type":"uint256"},{"internalType":"uint256","name":"qtyScaledSlot0","type":"uint256"},{"internalType":"uint256","name":"qtyScaledSlot1","type":"uint256"},{"internalType":"uint128","name":"txIdSlot0","type":"uint128"},{"internalType":"uint128","name":"txIdSlot1","type":"uint128"},{"internalType":"bytes","name":"sigObjSlot0","type":"bytes"},{"internalType":"bytes","name":"sigObjSlot1","type":"bytes"},{"internalType":"bool","name":"primarySecondarySlot0","type":"bool"},{"internalType":"bool","name":"primarySecondarySlot1","type":"bool"}],"name":"posColToksOnBehalfAtomic","outputs":[{"internalType":"uint256","name":"yes","type":"uint256"},{"internalType":"uint256","name":"no","type":"uint256"},{"internalType":"uint256","name":"yes2","type":"uint256"},{"internalType":"uint256","name":"no2","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"}],"name":"redeem","outputs":[{"internalType":"uint256","name":"amountUSDC","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"},{"internalType":"address","name":"","type":"address"},{"internalType":"uint128","name":"","type":"uint128"}],"name":"redeemAuthorizationUsed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"address","name":"user_account","type":"address"}],"name":"redeemOnBehalfOfUser","outputs":[{"internalType":"uint256","name":"amountUSDC","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"resolutionTimes","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"marketId","type":"uint128"},{"internalType":"bool","name":"noYes","type":"bool"}],"name":"resolveMarket","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_dao","type":"address"}],"name":"setDao","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_marketCreationFeeUsdc","type":"uint256"}],"name":"setMarketCreationFee","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_oracle","type":"address"}],"name":"setOracle","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_rakePercentScaled100","type":"uint256"}],"name":"setRakeScaled100","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"statements","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"totalCollateralUsd","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"totalNoTokensOutstanding","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"}],"name":"totalYesTokensOutstanding","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint128","name":"","type":"uint128"},{"internalType":"address","name":"","type":"address"}],"name":"yesTokens","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]
 
 testnet:0.0.9502269
 
