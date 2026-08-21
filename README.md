@@ -2,7 +2,7 @@
 
 Documentation for interacting with the Prism prediction protocol [https://prism.market](https://prism.market)
 
-Orderbooks are off-chain and are maintained by Prism. Only valid, pre-authorized, signed `PrismOrderIntentRequest` objects can be accepted by the smart contract for collateral token transfer (USDC). The public API is documented below (protobuf, gRPC).
+Orderbooks are off-chain and are maintained by Prism. Only valid, pre-authorized, signed `PrismPredictionIntentRequest` objects can be accepted by the smart contract for collateral token transfer (USDC). The public API is documented below (protobuf, gRPC).
 
 Settlement is performed on-chain using a smart contract. The smart contract's full ABI is documented below.
 
@@ -73,6 +73,9 @@ service ApiServicePublic {
   rpc GetUserPortfolio(UserPortfolioRequest) returns (UserPortfolioResponse);
   rpc CancelPredictionIntent(CancelOrderRequest) returns (StdResponse);
   rpc GetTxHashes(TxIdRequest) returns (TxIdHashesResponse);
+  rpc GetPredictionIntentMatches(GetMatchesRequest) returns (MatchesResponse);
+  rpc GetPrism(AccountIdRequest) returns (PrismResponse);
+  rpc ClaimPrism(ClaimPrismRequest) returns (StdResponse);
 }
 
 
@@ -99,6 +102,11 @@ message MarketIdRequest {
 
 message TxIdRequest {
   string tx_id = 1 [json_name = "txId",     (validate.rules).string = {pattern: "(?i)^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"} /* Strict RFC-9562-compliant UUIDv7 */];
+}
+
+message AccountIdRequest {
+  string account_id = 1 [json_name = "accountId", (validate.rules).string = {pattern: "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"} /* Hedera account ID (no leading zeros) */];
+  string net = 2        [json_name = "net",       (validate.rules).string = {in: ["mainnet", "testnet", "previewnet"]} /* Hedera network */];
 }
 
 /////
@@ -197,6 +205,10 @@ message MatchedIntents {
   repeated Match matched_prediction_intents = 1   [json_name = "matchedPredictionIntents"];
 }
 
+message MatchesResponse {
+  repeated Match matches = 1;
+}
+
 message Position {
   string market_id = 1        [json_name = "marketId"];
   string evm_address = 2      [json_name = "evmAddress"];
@@ -221,16 +233,9 @@ message PositionInfo {
   optional string cost_basis_as_of = 11     [json_name = "costBasisAsOf"];    // RFC3339 timestamp of the last fill applied
 }
 
-message PrismPoints {
-  uint32 season_id = 1          [json_name = "seasonId"];
-  float points = 2              [json_name = "points"];
-}
-
 message UserPortfolioResponse {
   map<string, PositionInfo> positions = 1                      [json_name = "positions"];
   map<string, PredictionIntents> open_prediction_intents = 2   [json_name = "openPredictionIntents"];
-  repeated PrismPoints prism_points = 3                        [json_name = "prismPoints"];
-  uint64 prism_token_balance = 4                               [json_name = "prismTokenBalance"];
 }
 
 message MarketResponse {
@@ -323,6 +328,20 @@ message TxHash {
 }
 message TxIdHashesResponse {
   repeated TxHash tx_hashes = 1 [json_name = "txHashes"];
+}
+
+message ClaimPrismRequest {
+  string account_id = 1     [json_name = "accountId", (validate.rules).string = {pattern: "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"} /* Hedera account ID (no leading zeros) */];
+  string net = 2            [json_name = "net",       (validate.rules).string = {in: ["mainnet", "testnet", "previewnet"]} /* Hedera network */];
+  string sig = 3            [json_name = "sig",       (validate.rules).string = {pattern: "^[A-Za-z0-9+/]{20,100}={0,2}$"} /* base64-encoded signature */];
+  string public_key = 4     [json_name = "publicKey", (validate.rules).string = {pattern: "^(04|03|02)[0-9a-fA-F]{32,256}$"} /* public key in hex format */];
+  uint32 key_type = 5       [json_name = "keyType",   (validate.rules).uint32 = {in: [1, 2]} /* 1 = ed25519, 2 = ecdsa_secp256k1 */];
+}
+
+message PrismResponse {
+  uint64 prism_balance = 1     [json_name = "prismBalance"];
+  uint64 prism_unredeemed = 2  [json_name = "prismUnredeemed"];
+  uint64 prism_redeemable = 3  [json_name = "prismRedeemable"];
 }
 ```
 
